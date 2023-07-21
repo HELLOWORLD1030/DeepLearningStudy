@@ -1,0 +1,70 @@
+# 线性回归-自己实现代码
+# 2023.7.20
+import random
+import torch
+from d2l import torch as d2l
+
+
+def synthetic_data(w, b, num_examples):  # @save
+    """⽣成y=Xw+b+噪声"""
+    X = torch.normal(0, 1, (num_examples, len(w)))
+    y = torch.matmul(X, w) + b
+    y += torch.normal(0, 0.01, y.shape)
+    return X, y.reshape((-1, 1))
+
+
+def data_iter(batch_size, features, labels):
+    num_examples = len(features)  # 获取样本个数
+    indices = list(range(num_examples))  # 将样本个数变成从1到个数的连续整数列表
+    # 这些样本是随机读取的，没有特定的顺序
+    random.shuffle(indices)  # 随机读取样本序号
+    for i in range(0, num_examples, batch_size):
+        batch_indices = torch.tensor(
+            indices[i: min(i + batch_size, num_examples)])
+        yield features[batch_indices], labels[batch_indices]  # 一次一次的返回
+
+
+def sgd(params, lr, batch_size):  # @save
+    """⼩批量随机梯度下降"""
+    with torch.no_grad():  # 当前计算不需要反向传播
+        for param in params:
+            param -= lr * param.grad / batch_size
+            param.grad.zero_()  # 梯度清零
+
+
+def squared_loss(y_hat, y):  # @save
+    """均⽅损失"""
+    return (y_hat - y.reshape(y_hat.shape)) ** 2 / 2
+
+
+def linreg(X, w, b):  # @save
+    """线性回归模型"""
+    return torch.matmul(X, w) + b
+
+
+true_w = torch.tensor([2, -3.4])  # 真实的w参数
+true_b = 4.2  # 真实的b参数
+features, labels = synthetic_data(true_w, true_b, 1000)  # 数据集
+
+batch_size = 10  # 批大小
+for X, y in data_iter(batch_size, features, labels):
+    print(X, '\n', y)
+    break
+
+w = torch.normal(0, 0.01, size=(2, 1), requires_grad=True)  # 随机选择一个w参数，利用正态分布
+b = torch.zeros(1, requires_grad=True)  # 令b为0
+
+lr = 0.03  # 设置超参数，学习率
+num_epochs = 3  # 训练轮回数
+net = linreg  # 设置网络
+loss = squared_loss  # 设置损失函数
+for epoch in range(num_epochs):
+    for X, y in data_iter(batch_size, features, labels):
+        l = loss(net(X, w, b), y)  # X和y的⼩批量损失
+        # 因为l形状是(batch_size,1)，⽽不是⼀个标量。 l中的所有元素被加到⼀起，
+        # 并以此计算关于[w,b]的梯度
+        l.sum().backward()
+        sgd([w, b], lr, batch_size)  # 使⽤参数的梯度更新参数
+    with torch.no_grad():
+        train_l = loss(net(features, w, b), labels)
+        print(f'epoch {epoch + 1}, loss {float(train_l.mean()):f}')
