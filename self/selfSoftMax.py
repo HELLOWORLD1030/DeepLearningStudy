@@ -10,8 +10,8 @@ import os
 
 
 # d2l.use_svg_display()
-
-
+#
+#
 # def get_fashion_mnist_labels(labels):  # @save
 #     """返回Fashion-MNIST数据集的⽂本标签"""
 #     text_labels = ['t-shirt', 'trouser', 'pullover', 'dress', 'coat',
@@ -38,12 +38,9 @@ import os
 #     return axes
 #
 #
-def get_dataloader_workers():  # @save
-    """使⽤4个进程来读取数据"""
-    # windows不允许使用子进程读取数据
-    return 0
 
-
+#
+#
 #
 #
 # # 通过ToTensor实例将图像数据从PIL类型变换成32位浮点数格式，
@@ -64,8 +61,13 @@ def get_dataloader_workers():  # @save
 #     continue
 # print('{} sec'.format(timer.stop()))
 # # print(len(mnist_train), len(mnist_test))
-
+# X, y = next(iter(data.DataLoader(mnist_train, batch_size=18)))
+# show_images(X.reshape(18, 28, 28), 2, 9, titles=get_fashion_mnist_labels(y));
 # 上述为数据集处理
+def get_dataloader_workers():  # @save
+    """使⽤4个进程来读取数据"""
+    # windows不允许使用子进程读取数据
+    return 0
 class Accumulator:  # @save
     """在n个变量上累加"""
 
